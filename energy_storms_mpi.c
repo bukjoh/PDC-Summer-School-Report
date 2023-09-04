@@ -180,7 +180,6 @@ int main(int argc, char *argv[]) {
     }
 
     /* 2. Begin time measurement */
-    printf("Before initial barrier\n");
     MPI_Barrier(MPI_COMM_WORLD);
     double ttotal = cp_Wtime();
 
@@ -208,10 +207,6 @@ int main(int argc, char *argv[]) {
        layer_local = layer_size / size + 2;
     }
 
-    printf("For rank %d, layer size is %d\n",rank,layer_local);
-    fflush(stdout);
-
-
     /* 3. Allocate memory for the layer and initialize to zero */
     float *layer = (float *)malloc( sizeof(float) * layer_local );
     float *layer_copy = (float *)malloc( sizeof(float) * layer_local );
@@ -237,7 +232,6 @@ int main(int argc, char *argv[]) {
             if ( rank > 0){
                 // Need to account for the first part only having one halo cell
                 position_local = position - rank * (layer_size / size) + 1;
-                fflush(stdout);
             }
             else {
                 position_local = position;
@@ -259,12 +253,7 @@ int main(int argc, char *argv[]) {
 
         // HERE WE NEED TO COMMUNICATE THE HALOS
 
-	float test;
-        MPI_Status test_status;
 
-        printf("rank,size,%d,%d\n",rank,size);
-        printf("Before communication\n");
-        fflush(stdout);
 
         // Everyone but the last rank sends the second to last element to the rank above
         // Recieved in the first element of layer_copy
@@ -274,51 +263,27 @@ int main(int argc, char *argv[]) {
         int recv_target, send_target;
          
         if (rank > 0){
-           printf("rank %d is recieving from %d\n",rank,rank-1);
-           fflush(stdout);
-           recv_target = rank-1;
           
            MPI_Irecv(&layer_copy[0],1,MPI_REAL,rank-1,0,MPI_COMM_WORLD,&request);
-           printf("Recieve finished2\n");
-           fflush(stdout);
 
         }
 
         if (rank != size - 1){
           
-           printf("rank %d is sending to %d\n",rank,rank+1);
-           fflush(stdout);
-           send_target = rank+1;
-           fflush(stdout);
            MPI_Send(&layer[layer_local-2],1,MPI_REAL,rank+1,0,MPI_COMM_WORLD);
-           printf("Send finished2!\n");
-           fflush(stdout);
 
         }
-        MPI_Barrier(MPI_COMM_WORLD);
-        printf("After if statements\n");
-        fflush(stdout);
         // Wait for the transfers to finish
         if (rank > 0){ 
-            printf("rank %d is waiting\n",rank);
-            fflush(stdout);
-            MPI_Wait(&request,MPI_STATUS_IGNORE);
-            printf("transfer finished\n");
-            fflush(stdout);
+            MPI_Wait(&request,&status);
         } 
 	
-        printf("Before second barrier\n");
-        fflush(stdout);
         MPI_Barrier(MPI_COMM_WORLD);
-        printf("After second barrier\n");
-        fflush(stdout);
 
 
         // Everyone but the first rank sends the second element to the rank below
         // Recieved in the last element of layer_copy
 
-        printf("GOT TO HERE!!!!!!!!!!!!!\n");
-        fflush(stdout);
 
 
         if (rank != size - 1){
@@ -326,16 +291,12 @@ int main(int argc, char *argv[]) {
            MPI_Irecv(&layer_copy[layer_local-1],1,MPI_REAL,rank+1,1,MPI_COMM_WORLD,&request);
 
         }
-         printf("Posted recieves\n");
-        fflush(stdout);
 
         if (rank > 0){
 
            MPI_Send(&layer[1],1,MPI_REAL,rank-1,1,MPI_COMM_WORLD);
 
         }
-        printf("Send data\n");
-        fflush(stdout);
 
          if (rank != size - 1){
             MPI_Status status;
@@ -343,8 +304,6 @@ int main(int argc, char *argv[]) {
         }
 
         MPI_Barrier(MPI_COMM_WORLD);
-        printf("After first communication\n");
-        fflush(stdout);
 
         /* 4.2.2. Update layer using the ancillary values.
                   Skip updating the first and last positions */
@@ -355,7 +314,6 @@ int main(int argc, char *argv[]) {
         float local_max = 0;
         int local_pos = 0;
 
-        // NEED TO SOMEHOW SORT THIS OUT
         // Find max in each part
         // call MPI_Reduce with MAX_LOC and a struct with the value and index at the same time 
         /* 4.3. Locate the maximum value in the layer, and its position */
@@ -389,8 +347,8 @@ int main(int argc, char *argv[]) {
         local_info.val = local_max;
         local_info.pos = layer_size * rank + local_pos;
         
-        // Do all_reduce to set up the sendrecv back to rank 0, if necessary
-        MPI_Allreduce(&local_info,&global_info,1,MPI_FLOAT_INT,MPI_MAXLOC,MPI_COMM_WORLD);
+        // Do reduce to get max to rank 0 for printing
+        MPI_Reduce(&local_info,&global_info,1,MPI_FLOAT_INT,MPI_MAXLOC,0,MPI_COMM_WORLD);
         
         result_rank = global_info.pos / layer_size;
         result_index = global_info.pos % layer_size;

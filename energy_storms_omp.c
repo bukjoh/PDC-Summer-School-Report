@@ -145,6 +145,15 @@ Storm read_storm_file( char *fname ) {
     return storm;
 }
 
+ //Structure used for reduction
+        struct flt_int{
+           float val;
+           int idx;
+        };
+//Create reduction
+#pragma omp declare reduction(max_idx : struct flt_int : omp_out = omp_in.val > omp_out.val ? omp_in : omp_out)
+
+
 /*
  * MAIN PROGRAM
  */
@@ -177,6 +186,7 @@ int main(int argc, char *argv[]) {
     double ttotal = cp_Wtime();
 
     /* START: Do NOT optimize/parallelize the code of the main program above this point */
+
 
     /* 3. Allocate memory for the layer and initialize to zero */
     float *layer = (float *)malloc( sizeof(float) * layer_size );
@@ -214,7 +224,10 @@ int main(int argc, char *argv[]) {
 
         /* 4.2. Energy relaxation between storms */
         /* 4.2.1. Copy values to the ancillary array */
-        #pragma omp parallel
+
+        struct flt_int local_max = { 0.0f, 0};
+ 
+        #pragma omp parallel shared(local_max)
         {
         #pragma omp for
         for( k=0; k<layer_size; k++ ) 
@@ -227,18 +240,22 @@ int main(int argc, char *argv[]) {
             layer[k] = ( layer_copy[k-1] + layer_copy[k] + layer_copy[k+1] ) / 3;
 
 
-
-        }
         /* 4.3. Locate the maximum value in the layer, and its position */
+        #pragma omp for reduction(max_idx : local_max)
         for( k=1; k<layer_size-1; k++ ) {
             /* Check it only if it is a local maximum */
             if ( layer[k] > layer[k-1] && layer[k] > layer[k+1] ) {
-                if ( layer[k] > maximum[i] ) {
-                    maximum[i] = layer[k];
-                    positions[i] = k;
+                if ( layer[k] > local_max.val ) {
+                    local_max.val = layer[k];
+                    local_max.idx = k;
                 }
             }
         }
+      }
+      // Outside parallel
+      maximum[i] = local_max.val;
+      positions[i] = local_max.idx;
+
     }
 
     /* END: Do NOT optimize/parallelize the code below this point */

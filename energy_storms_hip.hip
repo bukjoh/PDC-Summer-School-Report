@@ -217,7 +217,6 @@ __global__ void max_serial(float *layer, int layer_size, float *maximum, int *po
       maximum[num_storm] = 0.0f;
       position[num_storm] = 0;
       for( int k=1; k<layer_size-1; k++ ) {
-          printf("layer[%d] = %f\n",k,layer[k]);
          /* Check it only if it is a local maximum */
           if ( layer[k] > layer[k-1] && layer[k] > layer[k+1] ) {
              if ( layer[k] > maximum[num_storm] ) {
@@ -245,11 +244,11 @@ __global__ void max_parallel(float *layer, int layer_size, float *maximum, int *
     float localMax = 0.f;
     int localMaxIdx = 0;
     
-     for (int i = threadIdx.x; i < layer_size && i> 1; i += blockDim.x)
+     for (int i = threadIdx.x; i < layer_size && i > 0; i += blockDim.x)
     {
         float val = layer[i];
   
-        if (localMax < abs(val) && val > layer[i-1] && val < layer[i-1])
+        if (localMax < abs(val) && abs(val) > layer[i+1] && abs(val) > layer[i-1])
         {
             localMax = abs(val);
             localMaxIdx = i;
