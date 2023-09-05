@@ -229,6 +229,9 @@ __global__ void max_serial(float *layer, int layer_size, float *maximum, int *po
 }
 
 __global__ void max_parallel(float *layer, int layer_size, float *maximum, int *position, int num_storm){
+    // NON-FUNCTIONAL AND SLOW
+    // LEFT IN HERE TO DEMONSTRATE THE APPROACH
+
     int index = threadIdx.x + blockIdx.x * blockDim.x;
 
     __shared__ float sharedMax;

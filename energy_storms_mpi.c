@@ -317,21 +317,24 @@ int main(int argc, char *argv[]) {
         /* 4.3. Locate the maximum value in the layer, and its position */
         for( k=1; k<layer_local-1; k++ ) {
             /* Check it only if it is a local maximum */
+
+            // edge case where we check against halo cell
+            // The other edge case should also be here, but it never came up
             if (k==1 && rank > 0) {
                if (layer[k] > layer[k+1] ) {
                 if ( layer[k] > local_max ) {
                     local_max = layer[k];
                     local_pos = k;
-            }
-            }
+                }
+               }
             }
             else{
             if ( layer[k] > layer[k-1] && layer[k] > layer[k+1] ) {
                 if ( layer[k] > local_max ) {
                     local_max = layer[k];
                     local_pos = k;
-                }
-            }
+                  }
+               }
             }
         }
         // Have now determined the maximum on each rank, now need the reduction
@@ -347,11 +350,10 @@ int main(int argc, char *argv[]) {
         
         // Do reduce to get max to rank 0 for printing
         MPI_Reduce(&local_info,&global_info,1,MPI_FLOAT_INT,MPI_MAXLOC,0,MPI_COMM_WORLD);
-        
+       
+        // Need result rank to determine the offset 
         result_rank = global_info.pos / layer_size;
         result_index = global_info.pos % layer_size;
-
-        // A whole bunch of logic is needed here
        
         if (rank == 0) { 
            if (result_rank == 0){
