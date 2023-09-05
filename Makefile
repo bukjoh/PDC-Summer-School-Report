@@ -28,7 +28,7 @@ HIPCC=hipcc
 OMPFLAG= -fopenmp
 
 # Flags for optimization and libs
-FLAGS=-O3 -Wall
+FLAGS=-O3 -Wall -ffast-math
 LIBS=-lm
 
 # Targets to build

@@ -260,7 +260,6 @@ int main(int argc, char *argv[]) {
         
         MPI_Request request;
         MPI_Status status;
-        int recv_target, send_target;
          
         if (rank > 0){
           
@@ -278,7 +277,6 @@ int main(int argc, char *argv[]) {
             MPI_Wait(&request,&status);
         } 
 	
-        MPI_Barrier(MPI_COMM_WORLD);
 
 
         // Everyone but the first rank sends the second element to the rank below
