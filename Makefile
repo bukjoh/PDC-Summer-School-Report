@@ -33,7 +33,7 @@ LIBS=-lm
 
 # Targets to build
 # change energy_storms_cuda to energy_storms_hip in order to build for hip instead
-OBJS=energy_storms_seq energy_storms_omp energy_storms_mpi energy_storms_hip energy_storms_ompgpu
+OBJS=energy_storms_seq energy_storms_omp energy_storms_mpi energy_storms_hip #energy_storms_ompgpu
 
 # Rules. By default show help
 help:
@@ -56,22 +56,22 @@ help:
 all: $(OBJS)
 
 energy_storms_seq: energy_storms.c
-	$(CC) $(DEBUG) $< $(LIBS) -o $@
+	$(CC) $(FLAGS) $(DEBUG) $< $(LIBS) -o $@
 
 energy_storms_omp: energy_storms_omp.c
-	$(CC) $(DEBUG) $(OMPFLAG) $< $(LIBS) -o $@
+	$(CC) $(FLAGS) $(DEBUG) $(OMPFLAG) $< $(LIBS) -o $@
 
-energy_storms_ompgpu: energy_storms_ompgpu.c
-	$(CC) $(DEBUG) $(OMPFLAG) -fopenmp-targets=amdgcn -Xopenmp-target -march=gfx90a $< $(LIBS) -o $@
+#energy_storms_ompgpu: energy_storms_ompgpu.c
+#	$(CC) $(FLAGS) $(DEBUG) $(OMPFLAG) -fopenmp-targets=amdgcn -Xopenmp-target -march=gfx90a $< $(LIBS) -o $@
 
 energy_storms_mpi: energy_storms_mpi.c
-	$(MPICC) $(DEBUG) $< $(LIBS) -o $@
+	$(MPICC) $(FLAGS) $(DEBUG) $< $(LIBS) -o $@
 
 energy_storms_cuda: energy_storms_cuda.cu
-	$(CUDACC) $(DEBUG) $< $(LIBS) -o $@
+	$(CUDACC) $(FLAGS) $(DEBUG) $< $(LIBS) -o $@
 
 energy_storms_hip: energy_storms_hip.hip
-	$(HIPCC) $(DEBUG) --offload-arch=gfx90a $< $(LIBS) -o $@
+	$(HIPCC) $(FLAGS) $(DEBUG) --offload-arch=gfx90a $< $(LIBS) -o $@
 
 # Remove the target files
 clean:
