@@ -1,0 +1,18 @@
+# To build the code using the included makefile:
+
+# Module loads for the hip code on Dardel
+ml PDC rocm/5.3.3 craype-accel-amd-gfx90a
+make all
+
+# Running the code
+There are four bash scripts for running the benchmarks used in the report. They are
+
+- run_seq.sh for the sequential version.
+- run_omp.sh for the OMP version. Takes a command-line argument for the number of threads, e.g. bash run_omp.sh 16 for 16 OMP threads
+- run_omp.sh for the MPI version. Takes a command-line argument for the number of processes, e.g. bash run_mpi.sh 16 for 16 OMP processes
+- run_hip.sh for the HIP version.
+
+All four requires allocating a (GPU) node using salloc
+
+For running the code using more advanced inputs, see the included documentation
+
