@@ -278,7 +278,7 @@ __global__ void max_parallel(float *layer, int layer_size, float *maximum, int *
  * MAIN PROGRAM
  */
 int main(int argc, char *argv[]) {
-    int i,j,k;
+    int i,j;
 
     /* 1.1. Read arguments */
     if (argc<3) {
@@ -355,7 +355,7 @@ int main(int argc, char *argv[]) {
 
         /* 4.3. Locate the maximum value in the layer, and its position */
     
-        max_parallel<<<gridDim,blockDim>>>(device_layer,layer_size, device_max, device_pos,i);
+        max_serial<<<gridDim,blockDim>>>(device_layer,layer_size, device_max, device_pos,i);
 
     }
 
